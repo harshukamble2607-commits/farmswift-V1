@@ -1,0 +1,784 @@
+<!doctype html>
+<html lang="en" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FarmSwift - Farm Fresh, Swift Delivery!</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet">
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full bg-gray-50">
+  <div id="app" class="h-full overflow-auto"><!-- Loading State -->
+   <div id="loading-screen" class="fixed inset-0 bg-white z-50 flex items-center justify-center">
+    <div class="text-center">
+     <div class="text-6xl mb-4">
+      ⚡🥬
+     </div>
+     <div class="w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+     <p class="text-gray-600 font-medium">Loading FarmSwift...</p>
+     <p class="text-xs text-gray-400 mt-2">Connecting to Google Sheets...</p>
+    </div>
+   </div><!-- Connection Error -->
+   <div id="connection-error" class="hidden fixed inset-0 bg-white z-50 flex items-center justify-center">
+    <div class="text-center p-8">
+     <div class="text-6xl mb-4">
+      ⚠️
+     </div>
+     <h2 class="text-xl font-bold text-gray-800 mb-2">Connection Issue</h2>
+     <p class="text-gray-600 mb-4">Unable to connect to Google Sheets database.</p><button onclick="location.reload()" class="bg-emerald-600 text-white px-6 py-2 rounded-xl font-medium hover:bg-emerald-700 transition"> Try Again </button>
+    </div>
+   </div><!-- Main Customer View -->
+   <div id="customer-view" class="hidden"><!-- Sticky Header -->
+    <header class="sticky top-0 z-40 bg-white shadow-sm">
+     <div class="max-w-7xl mx-auto px-4 py-3">
+      <div class="flex items-center justify-between gap-4"><!-- Logo -->
+       <div class="flex items-center gap-2 min-w-fit cursor-pointer" onclick="showCustomerView()"><span class="text-2xl">⚡</span>
+        <div>
+         <h1 id="site-title" class="text-xl font-bold logo-text">FarmSwift</h1>
+         <p class="text-xs text-gray-500">Farm Fresh, Swift Delivery!</p>
+        </div>
+       </div><!-- Search Bar -->
+       <div class="flex-1 max-w-2xl">
+        <div class="relative"><input type="text" id="search-input" placeholder="Search for fresh vegetables, fruits, dairy..." class="w-full px-4 py-2.5 pl-11 bg-gray-100 rounded-xl border-2 border-transparent focus:border-emerald-500 focus:bg-white transition outline-none text-sm">
+         <svg class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+         </svg>
+        </div>
+       </div><!-- Right Actions -->
+       <div class="flex items-center gap-3"><button id="login-btn" class="hidden md:flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition font-medium text-sm">
+         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+         </svg> Login </button> <button id="cart-btn" class="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-xl hover:bg-emerald-700 transition font-medium text-sm">
+         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+         </svg><span id="cart-count" class="bg-white text-emerald-600 px-2 py-0.5 rounded-full text-xs font-bold">0</span> <span id="cart-total" class="hidden md:inline">₹0</span> </button>
+       </div>
+      </div>
+     </div><!-- Category Navigation -->
+     <nav class="bg-white border-t">
+      <div class="max-w-7xl mx-auto px-4">
+       <div class="flex items-center gap-1 overflow-x-auto py-2 no-scrollbar"><button class="category-btn category-item flex flex-col items-center px-4 py-2 rounded-xl transition min-w-fit bg-emerald-100" data-category="all"> <span class="text-2xl mb-1">���</span> <span class="text-xs font-medium text-gray-700">All Items</span> </button> <button class="category-btn category-item flex flex-col items-center px-4 py-2 rounded-xl transition min-w-fit" data-category="vegetables"> <span class="text-2xl mb-1">🥬</span> <span class="text-xs font-medium text-gray-700">Vegetables</span> </button> <button class="category-btn category-item flex flex-col items-center px-4 py-2 rounded-xl transition min-w-fit" data-category="fruits"> <span class="text-2xl mb-1">🍎</span> <span class="text-xs font-medium text-gray-700">Fruits</span> </button> <button class="category-btn category-item flex flex-col items-center px-4 py-2 rounded-xl transition min-w-fit" data-category="dairy"> <span class="text-2xl mb-1">🥛</span> <span class="text-xs font-medium text-gray-700">Dairy</span> </button> <button class="category-btn category-item flex flex-col items-center px-4 py-2 rounded-xl transition min-w-fit" data-category="grains"> <span class="text-2xl mb-1">🌾</span> <span class="text-xs font-medium text-gray-700">Grains</span> </button> <button class="category-btn category-item flex flex-col items-center px-4 py-2 rounded-xl transition min-w-fit" data-category="spices"> <span class="text-2xl mb-1">🌶️</span> <span class="text-xs font-medium text-gray-700">Spices</span> </button> <button class="category-btn category-item flex flex-col items-center px-4 py-2 rounded-xl transition min-w-fit" data-category="organic"> <span class="text-2xl mb-1">🌿</span> <span class="text-xs font-medium text-gray-700">Organic</span> </button>
+        <div class="h-8 w-px bg-gray-200 mx-2"></div><button id="sell-product-btn" class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl hover:from-amber-600 hover:to-orange-600 transition min-w-fit"> <span class="text-lg">������</span> <span class="text-xs font-semibold">Sell Your Product</span> </button> <button id="delivery-login-btn" class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-xl hover:from-blue-600 hover:to-indigo-600 transition min-w-fit"> <span class="text-lg">🚴</span> <span class="text-xs font-semibold">Delivery Partner</span> </button> <button id="darkstore-login-btn" class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:from-purple-600 hover:to-pink-600 transition min-w-fit"> <span class="text-lg">🏪</span> <span class="text-xs font-semibold">Dark Store</span> </button>
+       </div>
+      </div>
+     </nav>
+    </header><!-- Hero Banner -->
+    <section class="max-w-7xl mx-auto px-4 py-6">
+     <div id="hero-banner" class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-500 h-48 md:h-64" style="background-size: cover; background-position: center;">
+      <div class="absolute inset-0 bg-gradient-to-r from-emerald-600/90 to-teal-500/80" id="hero-overlay"></div>
+      <div class="h-full flex items-center px-8 md:px-12 relative z-10">
+       <div class="text-white max-w-lg">
+        <p id="hero-badge-text" class="text-sm font-medium bg-white/20 inline-block px-3 py-1 rounded-full mb-3">⚡ Lightning Fast Delivery</p>
+        <h2 id="hero-text" class="text-2xl md:text-4xl font-bold mb-2">Farm Fresh, Swift Delivery!</h2>
+        <p id="hero-subtitle-text" class="text-emerald-100 mb-4">Get fresh produce delivered in 8 minutes</p>
+        <div class="flex items-center gap-2"><span id="hero-tag-text" class="bg-white/20 px-3 py-1 rounded-full text-sm">📊 Powered by Google Sheets</span>
+        </div>
+       </div>
+      </div>
+     </div>
+    </section><!-- Products Grid -->
+    <section class="max-w-7xl mx-auto px-4 py-6">
+     <div class="flex items-center justify-between mb-6">
+      <h2 class="text-xl font-bold text-gray-800">Fresh Products</h2>
+      <div class="flex items-center gap-3"><button id="refresh-btn" class="text-sm text-emerald-600 hover:text-emerald-700 font-medium flex items-center gap-1"> <span id="refresh-icon">🔄</span> Refresh </button>
+       <p id="product-count" class="text-sm text-gray-500">Loading...</p>
+      </div>
+     </div>
+     <div id="products-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"><!-- Products will be rendered here -->
+     </div>
+     <div id="products-loading" class="text-center py-16">
+      <div class="loading-spinner mx-auto mb-4"></div>
+      <p class="text-gray-500">Loading products from Google Sheets...</p>
+     </div>
+     <div id="no-products" class="hidden text-center py-16"><span class="text-6xl mb-4 block">🌱</span>
+      <h3 class="text-xl font-semibold text-gray-700 mb-2">No products available yet</h3>
+      <p class="text-gray-500">Add products to your Google Sheet!</p>
+     </div>
+    </section><!-- Features Section -->
+    <section class="bg-white mt-8">
+     <div class="max-w-7xl mx-auto px-4 py-12">
+      <div class="text-center mb-10">
+       <h2 class="text-2xl font-bold text-gray-800 mb-2">Why Choose FarmSwift?</h2>
+       <p class="text-gray-600">Connected to Google Sheets for easy data management!</p>
+      </div>
+      <div class="grid md:grid-cols-4 gap-6">
+       <div class="text-center p-6 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl">
+        <div class="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-4"><span class="text-3xl">⚡</span>
+        </div>
+        <h3 class="font-semibold text-gray-800 mb-2">8 Min Delivery</h3>
+        <p class="text-sm text-gray-600">Lightning-fast delivery</p>
+       </div>
+       <div class="text-center p-6 bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl">
+        <div class="w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center mx-auto mb-4"><span class="text-3xl">📊</span>
+        </div>
+        <h3 class="font-semibold text-gray-800 mb-2">Google Sheets</h3>
+        <p class="text-sm text-gray-600">Easy database management</p>
+       </div>
+       <div class="text-center p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl">
+        <div class="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4"><span class="text-3xl">🚜</span>
+        </div>
+        <h3 class="font-semibold text-gray-800 mb-2">Direct from Farmers</h3>
+        <p class="text-sm text-gray-600">No middlemen</p>
+       </div>
+       <div class="text-center p-6 bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl">
+        <div class="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4"><span class="text-3xl">✅</span>
+        </div>
+        <h3 class="font-semibold text-gray-800 mb-2">Quality Assured</h3>
+        <p class="text-sm text-gray-600">Fresh produce always</p>
+       </div>
+      </div>
+     </div>
+    </section><!-- About Section (moved to bottom) -->
+    <section id="about-section" class="max-w-7xl mx-auto px-4 py-8">
+     <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+      <div class="grid md:grid-cols-2 gap-0">
+       <div id="about-image-container" class="h-64 md:h-auto bg-gradient-to-br from-emerald-100 to-teal-100 flex items-center justify-center"><span class="text-8xl">🌾</span>
+       </div>
+       <div class="p-8">
+        <h2 id="about-section-title" class="text-2xl font-bold text-gray-800 mb-4">About FarmSwift</h2>
+        <p id="about-section-description" class="text-gray-600 mb-6 leading-relaxed">FarmSwift is your trusted partner for farm-fresh produce delivered straight to your doorstep. We connect local farmers directly with consumers, ensuring the freshest quality while supporting sustainable farming practices.</p>
+        <div class="grid grid-cols-2 gap-4">
+         <div class="bg-gradient-to-br from-emerald-50 to-teal-50 p-4 rounded-xl">
+          <div class="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center mb-2"><span class="text-xl">🎯</span>
+          </div>
+          <h3 id="about-mission-title-display" class="font-semibold text-gray-800 mb-1">Our Mission</h3>
+          <p id="about-mission-text-display" class="text-sm text-gray-600">To deliver farm-fresh produce within minutes while supporting local farmers.</p>
+         </div>
+         <div class="bg-gradient-to-br from-amber-50 to-orange-50 p-4 rounded-xl">
+          <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center mb-2"><span class="text-xl">🌟</span>
+          </div>
+          <h3 id="about-vision-title-display" class="font-semibold text-gray-800 mb-1">Our Vision</h3>
+          <p id="about-vision-text-display" class="text-sm text-gray-600">To become the leading platform connecting farms and homes sustainably.</p>
+         </div>
+        </div>
+       </div>
+      </div>
+     </div>
+    </section><!-- Footer -->
+    <footer class="bg-gray-900 text-white py-10">
+     <div class="max-w-7xl mx-auto px-4">
+      <div class="grid md:grid-cols-4 gap-8 mb-8">
+       <div>
+        <div class="flex items-center gap-2 mb-4"><span class="text-2xl">⚡</span>
+         <h3 class="font-bold text-xl text-emerald-400">FarmSwift</h3>
+        </div>
+        <p class="text-sm text-gray-400">Farm fresh produce delivered in minutes. Powered by Google Sheets!</p>
+       </div>
+       <div>
+        <h4 class="font-semibold mb-3">Quick Links</h4>
+        <ul class="space-y-2 text-sm text-gray-400">
+         <li><a href="#" class="hover:text-emerald-400 transition">About Us</a></li>
+         <li><a href="#" class="hover:text-emerald-400 transition">Contact</a></li>
+        </ul>
+       </div>
+       <div>
+        <h4 class="font-semibold mb-3">Partner With Us</h4>
+        <ul class="space-y-2 text-sm text-gray-400">
+         <li><a href="#" class="hover:text-emerald-400 transition">Become a Farmer</a></li>
+         <li><a href="#" class="hover:text-emerald-400 transition">Delivery Partner</a></li>
+        </ul>
+       </div>
+       <div>
+        <h4 class="font-semibold mb-3">Contact Us</h4>
+        <p class="text-sm text-gray-400">support@farmswift.in</p>
+       </div>
+      </div>
+      <div class="border-t border-gray-800 pt-6 text-center text-sm text-gray-500">
+       © 2024 FarmSwift. Powered by Google Sheets ����������
+      </div>
+     </div>
+    </footer>
+   </div><!-- Cart Sidebar -->
+   <div id="cart-sidebar" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50 modal-overlay" id="cart-overlay"></div>
+    <div class="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl">
+     <div class="flex flex-col h-full">
+      <div class="flex items-center justify-between p-4 border-b">
+       <h2 class="text-lg font-bold text-gray-800">🛒 Your Cart</h2><button id="close-cart" class="p-2 hover:bg-gray-100 rounded-lg transition">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg></button>
+      </div>
+      <div id="cart-items" class="flex-1 overflow-y-auto p-4 space-y-4"></div>
+      <div id="cart-empty" class="hidden flex-1 flex items-center justify-center">
+       <div class="text-center"><span class="text-6xl mb-4 block">🛒</span>
+        <p class="text-gray-500">Your cart is empty</p>
+       </div>
+      </div>
+      <div id="cart-footer" class="border-t p-4 space-y-3">
+       <div class="flex justify-between text-lg font-bold"><span>Total</span> <span id="cart-total-sidebar">₹0</span>
+       </div><button id="checkout-btn" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-semibold hover:bg-emerald-700 transition pulse-btn flex items-center justify-center gap-2"> <span>Proceed to Checkout</span> <span>⚡</span> </button>
+      </div>
+     </div>
+    </div>
+   </div><!-- Address Modal -->
+   <div id="address-modal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50 modal-overlay"></div>
+    <div class="absolute inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden max-h-[90%] overflow-y-auto">
+     <div class="p-6">
+      <h2 class="text-xl font-bold text-gray-800 mb-6">📍 Delivery Address</h2>
+      <form id="address-form" class="space-y-4">
+       <div><label for="customer-name" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label> <input type="text" id="customer-name" required class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition">
+       </div>
+       <div><label for="customer-phone" class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label> <input type="tel" id="customer-phone" required class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition">
+       </div>
+       <div><label for="customer-address" class="block text-sm font-medium text-gray-700 mb-1">Full Address</label> <textarea id="customer-address" rows="3" required class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition resize-none"></textarea>
+       </div>
+       <div><label for="customer-landmark" class="block text-sm font-medium text-gray-700 mb-1">Landmark</label> <input type="text" id="customer-landmark" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition">
+       </div><button type="submit" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-semibold hover:bg-emerald-700 transition"> Continue to Payment → </button>
+      </form>
+     </div>
+    </div>
+   </div><!-- Payment Modal -->
+   <div id="payment-modal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50 modal-overlay"></div>
+    <div class="absolute inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden max-h-[90%] overflow-y-auto">
+     <div class="p-6">
+      <h2 class="text-xl font-bold text-gray-800 mb-6">💳 Payment</h2>
+      <div class="space-y-4">
+       <div class="border-2 border-emerald-500 rounded-xl p-4 bg-emerald-50">
+        <div class="flex items-center gap-3 mb-3"><input type="radio" name="payment" id="cod-payment" checked class="w-4 h-4 text-emerald-600"> <label for="cod-payment" class="font-medium text-gray-800">Cash on Delivery</label>
+        </div>
+       </div>
+       <div class="bg-gray-50 rounded-xl p-4">
+        <div class="flex justify-between mb-2"><span class="text-gray-600">Order Total</span> <span id="payment-total" class="font-bold text-gray-800">₹0</span>
+        </div>
+       </div><button id="place-order-btn" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-semibold hover:bg-emerald-700 transition flex items-center justify-center gap-2"> <span>Place Order</span> <span>⚡</span> </button>
+      </div>
+     </div>
+    </div>
+   </div><!-- Success Modal -->
+   <div id="success-modal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50 modal-overlay"></div>
+    <div class="absolute inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
+     <div class="p-8 text-center">
+      <div class="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6"><span class="text-5xl">✅</span>
+      </div>
+      <h2 class="text-2xl font-bold text-gray-800 mb-2">Order Placed! ⚡</h2>
+      <p class="text-gray-600 mb-4">Your order has been saved to Google Sheets!</p>
+      <p class="text-sm text-gray-500 mb-2">Order ID: <span id="success-order-id" class="font-mono font-bold text-emerald-600"></span></p>
+      <p class="text-sm text-gray-500 mb-4">Delivery ID: <span id="success-delivery-id" class="font-mono font-bold text-blue-600"></span></p>
+      <div id="success-payment-status" class="mb-4"></div><button id="close-success" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-semibold hover:bg-emerald-700 transition"> Continue Shopping </button>
+     </div>
+    </div>
+   </div><!-- Login Modal -->
+   <div id="login-modal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50 modal-overlay" id="login-overlay"></div>
+    <div class="absolute inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden max-h-[90%] overflow-y-auto">
+     <div class="p-6">
+      <div class="text-center mb-6"><span class="text-4xl">⚡</span>
+       <h2 class="text-xl font-bold text-gray-800 mt-2">Welcome to FarmSwift</h2>
+       <p class="text-sm text-gray-500">Powered by Google Sheets</p>
+      </div>
+      <form id="login-form" class="space-y-4">
+       <p id="login-user-type" class="text-sm text-emerald-600 font-medium text-center"></p>
+       <div><label for="login-email" class="block text-sm font-medium text-gray-700 mb-1">Email / ID</label> <input type="text" id="login-email" required class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition">
+       </div>
+       <div><label for="login-password" class="block text-sm font-medium text-gray-700 mb-1">Password</label> <input type="password" id="login-password" required class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition">
+       </div><button type="submit" id="login-submit-btn" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-semibold hover:bg-emerald-700 transition"> Login </button> <button type="button" id="register-toggle" class="w-full text-emerald-600 py-2 text-sm font-medium hover:underline"> New user? Register here </button> <button type="button" id="back-to-home" class="w-full text-gray-500 py-2 text-sm font-medium hover:underline"> ← Back to Home </button>
+      </form>
+      <form id="register-form" class="hidden space-y-4">
+       <p id="register-user-type" class="text-sm text-emerald-600 font-medium text-center"></p>
+       <div><label for="register-name" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label> <input type="text" id="register-name" required class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition">
+       </div>
+       <div><label for="register-email" class="block text-sm font-medium text-gray-700 mb-1">Email</label> <input type="email" id="register-email" required class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition">
+       </div>
+       <div><label for="register-phone" class="block text-sm font-medium text-gray-700 mb-1">Phone</label> <input type="tel" id="register-phone" required class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition">
+       </div>
+       <div><label for="register-password" class="block text-sm font-medium text-gray-700 mb-1">Password</label> <input type="password" id="register-password" required class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition">
+       </div><button type="submit" id="register-submit-btn" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-semibold hover:bg-emerald-700 transition"> Register </button> <button type="button" id="login-toggle" class="w-full text-emerald-600 py-2 text-sm font-medium hover:underline"> Already registered? Login </button>
+      </form>
+     </div>
+    </div>
+   </div><!-- Farmer Dashboard -->
+   <div id="farmer-dashboard" class="hidden min-h-full bg-gray-50">
+    <header class="bg-white shadow-sm sticky top-0 z-30">
+     <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3"><span class="text-2xl">🌾</span>
+       <div>
+        <h1 class="font-bold text-gray-800">Farmer Dashboard</h1>
+        <p id="farmer-name-display" class="text-sm text-gray-500"></p>
+       </div>
+      </div>
+      <div class="flex items-center gap-3"><button id="farmer-refresh" class="text-sm text-emerald-600 hover:text-emerald-700 font-medium">🔄 Refresh</button> <button id="farmer-logout" class="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition font-medium text-sm"> Logout </button>
+      </div>
+     </div>
+    </header>
+    <main class="max-w-7xl mx-auto px-4 py-6"><!-- Stats Cards -->
+     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div class="bg-white rounded-xl p-4 shadow-sm">
+       <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center"><span class="text-xl">🥬</span>
+        </div>
+        <div>
+         <p id="farmer-stat-products" class="text-xl font-bold text-gray-800">0</p>
+         <p class="text-xs text-gray-500">Products</p>
+        </div>
+       </div>
+      </div>
+      <div class="bg-white rounded-xl p-4 shadow-sm">
+       <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center"><span class="text-xl">✅</span>
+        </div>
+        <div>
+         <p id="farmer-stat-approved" class="text-xl font-bold text-gray-800">0</p>
+         <p class="text-xs text-gray-500">Approved</p>
+        </div>
+       </div>
+      </div>
+      <div class="bg-white rounded-xl p-4 shadow-sm">
+       <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center"><span class="text-xl">⏳</span>
+        </div>
+        <div>
+         <p id="farmer-stat-pending" class="text-xl font-bold text-gray-800">0</p>
+         <p class="text-xs text-gray-500">Pending</p>
+        </div>
+       </div>
+      </div>
+      <div class="bg-white rounded-xl p-4 shadow-sm">
+       <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center"><span class="text-xl">💰</span>
+        </div>
+        <div>
+         <p id="farmer-stat-earnings" class="text-xl font-bold text-gray-800">₹0</p>
+         <p class="text-xs text-gray-500">Est. Earnings</p>
+        </div>
+       </div>
+      </div>
+     </div>
+     <div class="bg-white rounded-xl p-6 shadow-sm mb-6">
+      <h2 class="text-lg font-bold text-gray-800 mb-4">Add New Product</h2>
+      <form id="add-product-form" class="space-y-4">
+       <div class="grid md:grid-cols-2 gap-4">
+        <div><label for="product-name" class="block text-sm font-medium text-gray-700 mb-1">Product Name</label> <input type="text" id="product-name" required class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition">
+        </div>
+        <div><label for="product-category" class="block text-sm font-medium text-gray-700 mb-1">Category</label> <select id="product-category" required class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition"> <option value="">Select category</option> <option value="vegetables">Vegetables</option> <option value="fruits">Fruits</option> <option value="dairy">Dairy</option> <option value="grains">Grains</option> <option value="spices">Spices</option> <option value="organic">Organic</option> </select>
+        </div>
+        <div><label for="product-price" class="block text-sm font-medium text-gray-700 mb-1">Price (₹)</label> <input type="number" id="product-price" required min="1" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition">
+        </div>
+        <div><label for="product-quantity" class="block text-sm font-medium text-gray-700 mb-1">Quantity (e.g., 500g, 1kg)</label> <input type="text" id="product-quantity" required class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition">
+        </div>
+        <div><label for="product-image" class="block text-sm font-medium text-gray-700 mb-1">Product Photo</label>
+         <div class="flex items-center gap-3"><label class="flex-1 flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-emerald-500 hover:bg-emerald-50 transition"> <span class="text-2xl">📷</span> <span class="text-sm text-gray-600">Click to upload photo</span> <input type="file" id="product-image" accept="image/*" class="hidden" onchange="previewFarmerImage(this)"> </label>
+          <div id="farmer-image-preview" class="hidden w-16 h-16 rounded-xl overflow-hidden bg-gray-100 border-2 border-emerald-500 flex-shrink-0"><img id="farmer-preview-img" src="" alt="Preview" class="w-full h-full object-cover">
+          </div>
+         </div><input type="hidden" id="product-image-data">
+        </div>
+        <div><label for="product-delivery-time" class="block text-sm font-medium text-gray-700 mb-1">Delivery Time</label> <select id="product-delivery-time" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition"> <option value="8 MINS">8 MINS</option> <option value="15 MINS">15 MINS</option> <option value="30 MINS">30 MINS</option> </select>
+        </div>
+       </div>
+       <div><label for="product-description" class="block text-sm font-medium text-gray-700 mb-1">Description</label> <textarea id="product-description" rows="2" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition resize-none"></textarea>
+       </div><button type="submit" id="add-product-btn" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-semibold hover:bg-emerald-700 transition"> Add Product to Google Sheets </button>
+      </form>
+     </div>
+     <div class="bg-white rounded-xl p-6 shadow-sm">
+      <h2 class="text-lg font-bold text-gray-800 mb-4">Your Products</h2>
+      <div id="farmer-products-list" class="space-y-3"></div>
+      <div id="farmer-no-products" class="hidden text-center py-8"><span class="text-4xl mb-3 block">��</span>
+       <p class="text-gray-500">No products yet. Add your first product!</p>
+      </div>
+     </div>
+    </main>
+   </div><!-- Delivery Dashboard -->
+   <div id="delivery-dashboard" class="hidden min-h-full bg-gray-50">
+    <header class="bg-white shadow-sm sticky top-0 z-30">
+     <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3"><span class="text-2xl">🚴</span>
+       <div>
+        <h1 class="font-bold text-gray-800">Delivery Partner</h1>
+        <p id="delivery-name-display" class="text-sm text-gray-500"></p>
+       </div>
+      </div>
+      <div class="flex items-center gap-3"><button id="delivery-refresh" class="text-sm text-emerald-600 hover:text-emerald-700 font-medium">🔄 Refresh</button> <button id="delivery-logout" class="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition font-medium text-sm"> Logout </button>
+      </div>
+     </div>
+    </header>
+    <main class="max-w-7xl mx-auto px-4 py-6"><!-- Stats Cards -->
+     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div class="bg-white rounded-xl p-4 shadow-sm">
+       <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center"><span class="text-xl">📦</span>
+        </div>
+        <div>
+         <p id="delivery-stat-assigned" class="text-xl font-bold text-gray-800">0</p>
+         <p class="text-xs text-gray-500">Assigned</p>
+        </div>
+       </div>
+      </div>
+      <div class="bg-white rounded-xl p-4 shadow-sm">
+       <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center"><span class="text-xl">🚚</span>
+        </div>
+        <div>
+         <p id="delivery-stat-picked" class="text-xl font-bold text-gray-800">0</p>
+         <p class="text-xs text-gray-500">Picked Up</p>
+        </div>
+       </div>
+      </div>
+      <div class="bg-white rounded-xl p-4 shadow-sm">
+       <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center"><span class="text-xl">✅</span>
+        </div>
+        <div>
+         <p id="delivery-stat-delivered" class="text-xl font-bold text-gray-800">0</p>
+         <p class="text-xs text-gray-500">Delivered</p>
+        </div>
+       </div>
+      </div>
+      <div class="bg-white rounded-xl p-4 shadow-sm">
+       <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center"><span class="text-xl">💰</span>
+        </div>
+        <div>
+         <p id="delivery-stat-earnings" class="text-xl font-bold text-gray-800">₹0</p>
+         <p class="text-xs text-gray-500">Earnings</p>
+        </div>
+       </div>
+      </div>
+     </div>
+     <div class="bg-white rounded-xl p-6 shadow-sm">
+      <h2 class="text-lg font-bold text-gray-800 mb-4">📦 Your Assigned Orders</h2>
+      <div id="delivery-orders-list" class="space-y-4"></div>
+      <div id="delivery-no-orders" class="hidden text-center py-8"><span class="text-4xl mb-3 block">📦</span>
+       <p class="text-gray-500">No orders assigned to you yet</p>
+       <p class="text-sm text-gray-400 mt-2">Orders will appear here when admin assigns them to you</p>
+      </div>
+     </div>
+    </main>
+   </div><!-- Dark Store Dashboard -->
+   <div id="darkstore-dashboard" class="hidden min-h-full bg-gray-50">
+    <header class="bg-white shadow-sm sticky top-0 z-30">
+     <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3"><span class="text-2xl">🏪</span>
+       <div>
+        <h1 class="font-bold text-gray-800">Dark Store Partner</h1>
+        <p id="darkstore-name-display" class="text-sm text-gray-500"></p>
+       </div>
+      </div>
+      <div class="flex items-center gap-3"><button id="darkstore-refresh" class="text-sm text-emerald-600 hover:text-emerald-700 font-medium">🔄 Refresh</button> <button id="darkstore-logout" class="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition font-medium text-sm"> Logout </button>
+      </div>
+     </div>
+    </header>
+    <main class="max-w-7xl mx-auto px-4 py-6"><!-- Stats Cards -->
+     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div class="bg-white rounded-xl p-4 shadow-sm">
+       <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center"><span class="text-xl">📦</span>
+        </div>
+        <div>
+         <p id="darkstore-stat-total" class="text-xl font-bold text-gray-800">0</p>
+         <p class="text-xs text-gray-500">Total Orders</p>
+        </div>
+       </div>
+      </div>
+      <div class="bg-white rounded-xl p-4 shadow-sm">
+       <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center"><span class="text-xl">⏳</span>
+        </div>
+        <div>
+         <p id="darkstore-stat-pending" class="text-xl font-bold text-gray-800">0</p>
+         <p class="text-xs text-gray-500">Pending</p>
+        </div>
+       </div>
+      </div>
+      <div class="bg-white rounded-xl p-4 shadow-sm">
+       <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center"><span class="text-xl">✅</span>
+        </div>
+        <div>
+         <p id="darkstore-stat-completed" class="text-xl font-bold text-gray-800">0</p>
+         <p class="text-xs text-gray-500">Completed</p>
+        </div>
+       </div>
+      </div>
+      <div class="bg-white rounded-xl p-4 shadow-sm">
+       <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center"><span class="text-xl">💰</span>
+        </div>
+        <div>
+         <p id="darkstore-stat-revenue" class="text-xl font-bold text-gray-800">₹0</p>
+         <p class="text-xs text-gray-500">Revenue</p>
+        </div>
+       </div>
+      </div>
+     </div>
+     <div class="bg-white rounded-xl p-6 shadow-sm mb-6">
+      <h2 class="text-lg font-bold text-gray-800 mb-4">🎫 Verify Delivery ID</h2>
+      <form id="verify-delivery-form" class="flex gap-3"><label for="verify-delivery-id" class="sr-only">Delivery ID</label> <input type="text" id="verify-delivery-id" placeholder="Enter Delivery ID (DID-XXXXX)" class="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"> <button type="submit" class="bg-emerald-600 text-white px-6 py-2.5 rounded-xl font-medium hover:bg-emerald-700 transition"> Verify </button>
+      </form>
+      <div id="verified-order-details" class="hidden mt-4 p-4 bg-emerald-50 rounded-xl border-2 border-emerald-200"></div>
+     </div>
+     <div class="bg-white rounded-xl p-6 shadow-sm">
+      <h2 class="text-lg font-bold text-gray-800 mb-4">📋 All Orders</h2>
+      <div id="darkstore-orders-list" class="space-y-3"></div>
+      <div id="darkstore-no-orders" class="hidden text-center py-8"><span class="text-4xl mb-3 block">📦</span>
+       <p class="text-gray-500">No orders yet</p>
+      </div>
+     </div>
+    </main>
+   </div><!-- Admin Dashboard -->
+   <div id="admin-dashboard" class="hidden min-h-full bg-gray-50">
+    <header class="bg-white shadow-sm sticky top-0 z-30">
+     <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3"><span class="text-2xl">👑</span>
+       <div>
+        <h1 class="font-bold text-gray-800">Admin Dashboard</h1>
+        <p class="text-sm text-gray-500">Manage everything</p>
+       </div>
+      </div>
+      <div class="flex items-center gap-3"><span class="text-sm text-emerald-600 font-medium">📊 Google Sheets</span> <button id="admin-logout" class="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition font-medium text-sm"> Logout </button>
+      </div>
+     </div><!-- Admin Tabs -->
+     <div class="border-t bg-gray-50">
+      <div class="max-w-7xl mx-auto px-4">
+       <div class="flex gap-1 overflow-x-auto py-2 no-scrollbar"><button class="admin-tab px-4 py-2 rounded-lg font-medium text-sm transition bg-emerald-600 text-white" data-tab="overview">📊 Overview</button> <button class="admin-tab px-4 py-2 rounded-lg font-medium text-sm transition hover:bg-gray-200 text-gray-600" data-tab="site-settings">🎨 Site Settings</button> <button class="admin-tab px-4 py-2 rounded-lg font-medium text-sm transition hover:bg-gray-200 text-gray-600" data-tab="products">🥬 Products</button> <button class="admin-tab px-4 py-2 rounded-lg font-medium text-sm transition hover:bg-gray-200 text-gray-600" data-tab="orders">📦 Orders</button> <button class="admin-tab px-4 py-2 rounded-lg font-medium text-sm transition hover:bg-gray-200 text-gray-600" data-tab="users">👥 Users</button>
+       </div>
+      </div>
+     </div>
+    </header>
+    <main class="max-w-7xl mx-auto px-4 py-6"><!-- Site Settings Tab -->
+     <div id="admin-site-settings" class="admin-panel hidden"><!-- Hero Banner Settings -->
+      <div class="bg-white rounded-xl p-6 shadow-sm mb-6">
+       <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2">🖼️ Hero Banner Settings</h3>
+       <form id="hero-settings-form" class="space-y-4">
+        <div class="grid md:grid-cols-2 gap-4">
+         <div><label for="hero-title" class="block text-sm font-medium text-gray-700 mb-1">Hero Title</label> <input type="text" id="hero-title" placeholder="Farm Fresh, Swift Delivery!" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition">
+         </div>
+         <div><label for="hero-subtitle" class="block text-sm font-medium text-gray-700 mb-1">Hero Subtitle</label> <input type="text" id="hero-subtitle" placeholder="Get fresh produce delivered in 8 minutes" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition">
+         </div>
+         <div><label for="hero-badge" class="block text-sm font-medium text-gray-700 mb-1">Badge Text</label> <input type="text" id="hero-badge" placeholder="⚡ Lightning Fast Delivery" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition">
+         </div>
+         <div><label for="hero-tag" class="block text-sm font-medium text-gray-700 mb-1">Tag Line</label> <input type="text" id="hero-tag" placeholder="📊 Powered by Google Sheets" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition">
+         </div>
+         <div class="col-span-2"><label for="hero-bg-image" class="block text-sm font-medium text-gray-700 mb-1">Background Image</label>
+          <div class="flex items-center gap-4"><label class="flex-1 flex items-center justify-center gap-2 px-4 py-4 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-emerald-500 hover:bg-emerald-50 transition"> <span class="text-2xl">🖼️</span> <span class="text-sm text-gray-600">Click to upload background image</span> <input type="file" id="hero-bg-image" accept="image/*" class="hidden" onchange="previewHeroBgImage(this)"> </label>
+           <div id="hero-bg-preview" class="w-24 h-16 rounded-xl overflow-hidden bg-gray-100 border-2 border-emerald-500 flex-shrink-0 hidden"><img id="hero-bg-preview-img" src="" alt="Preview" class="w-full h-full object-cover">
+           </div>
+          </div><input type="hidden" id="hero-bg-image-data">
+          <p class="text-xs text-gray-500 mt-1">Recommended: 1920x400px or similar wide format</p>
+         </div>
+         <div><label for="hero-emoji" class="block text-sm font-medium text-gray-700 mb-1">Hero Emoji</label> <input type="text" id="hero-emoji" placeholder="🥗" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition">
+         </div>
+         <div><label for="hero-gradient-from" class="block text-sm font-medium text-gray-700 mb-1">Gradient Start Color</label>
+          <div class="flex items-center gap-2"><input type="color" id="hero-gradient-from" value="#10b981" class="w-12 h-10 rounded-lg border border-gray-300 cursor-pointer"> <input type="text" id="hero-gradient-from-text" value="#10b981" class="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition font-mono text-sm">
+          </div>
+         </div>
+         <div><label for="hero-gradient-to" class="block text-sm font-medium text-gray-700 mb-1">Gradient End Color</label>
+          <div class="flex items-center gap-2"><input type="color" id="hero-gradient-to" value="#14b8a6" class="w-12 h-10 rounded-lg border border-gray-300 cursor-pointer"> <input type="text" id="hero-gradient-to-text" value="#14b8a6" class="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition font-mono text-sm">
+          </div>
+         </div>
+        </div>
+        <div class="flex gap-3"><button type="submit" class="bg-emerald-600 text-white px-6 py-2.5 rounded-xl font-medium hover:bg-emerald-700 transition flex items-center gap-2"> 💾 Save Hero Settings </button> <button type="button" onclick="resetHeroSettings()" class="bg-gray-200 text-gray-700 px-6 py-2.5 rounded-xl font-medium hover:bg-gray-300 transition"> 🔄 Reset to Default </button>
+        </div>
+       </form><!-- Hero Preview -->
+       <div class="mt-6">
+        <h4 class="text-sm font-medium text-gray-700 mb-2">Preview:</h4>
+        <div id="hero-preview" class="relative overflow-hidden rounded-xl h-32 bg-gradient-to-r from-emerald-600 to-teal-500">
+         <div class="h-full flex items-center px-6">
+          <div class="text-white">
+           <p id="hero-preview-badge" class="text-xs font-medium bg-white/20 inline-block px-2 py-0.5 rounded-full mb-1">⚡ Lightning Fast Delivery</p>
+           <h2 id="hero-preview-title" class="text-lg font-bold">Farm Fresh, Swift Delivery!</h2>
+           <p id="hero-preview-subtitle" class="text-xs text-emerald-100">Get fresh produce delivered in 8 minutes</p>
+          </div>
+         </div>
+        </div>
+       </div>
+      </div><!-- About Section Settings -->
+      <div class="bg-white rounded-xl p-6 shadow-sm">
+       <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2">📝 About Section Settings</h3>
+       <div class="flex items-center gap-3 mb-4"><label class="relative inline-flex items-center cursor-pointer"> <input type="checkbox" id="about-enabled" class="sr-only peer" checked>
+         <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div></label> <span class="text-sm font-medium text-gray-700">Show About Section</span>
+       </div>
+       <form id="about-settings-form" class="space-y-4">
+        <div class="grid md:grid-cols-2 gap-4">
+         <div class="col-span-2"><label for="about-title" class="block text-sm font-medium text-gray-700 mb-1">Section Title</label> <input type="text" id="about-title" placeholder="About FarmSwift" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition">
+         </div>
+         <div class="col-span-2"><label for="about-description" class="block text-sm font-medium text-gray-700 mb-1">Description</label> <textarea id="about-description" rows="4" placeholder="Write about your business..." class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition resize-none"></textarea>
+         </div>
+         <div class="col-span-2"><label for="about-image" class="block text-sm font-medium text-gray-700 mb-1">About Section Image</label>
+          <div class="flex items-center gap-4"><label class="flex-1 flex items-center justify-center gap-2 px-4 py-4 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-emerald-500 hover:bg-emerald-50 transition"> <span class="text-2xl">📷</span> <span class="text-sm text-gray-600">Click to upload about image</span> <input type="file" id="about-image" accept="image/*" class="hidden" onchange="previewAboutImage(this)"> </label>
+           <div id="about-image-preview" class="w-24 h-24 rounded-xl overflow-hidden bg-gray-100 border-2 border-emerald-500 flex-shrink-0 hidden"><img id="about-image-preview-img" src="" alt="Preview" class="w-full h-full object-cover">
+           </div>
+          </div><input type="hidden" id="about-image-data">
+         </div>
+         <div><label for="about-mission-title" class="block text-sm font-medium text-gray-700 mb-1">Mission Title</label> <input type="text" id="about-mission-title" placeholder="Our Mission" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition">
+         </div>
+         <div><label for="about-vision-title" class="block text-sm font-medium text-gray-700 mb-1">Vision Title</label> <input type="text" id="about-vision-title" placeholder="Our Vision" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition">
+         </div>
+         <div><label for="about-mission-text" class="block text-sm font-medium text-gray-700 mb-1">Mission Text</label> <textarea id="about-mission-text" rows="2" placeholder="Our mission is..." class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition resize-none"></textarea>
+         </div>
+         <div><label for="about-vision-text" class="block text-sm font-medium text-gray-700 mb-1">Vision Text</label> <textarea id="about-vision-text" rows="2" placeholder="Our vision is..." class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition resize-none"></textarea>
+         </div>
+        </div><button type="submit" class="bg-emerald-600 text-white px-6 py-2.5 rounded-xl font-medium hover:bg-emerald-700 transition flex items-center gap-2"> 💾 Save About Settings </button>
+       </form>
+      </div>
+     </div><!-- Overview Tab -->
+     <div id="admin-overview" class="admin-panel">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+       <div class="bg-white rounded-xl p-5 shadow-sm">
+        <div class="flex items-center gap-3">
+         <div class="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center"><span class="text-2xl">🥬</span>
+         </div>
+         <div>
+          <p class="text-2xl font-bold text-gray-800" id="stat-products">0</p>
+          <p class="text-sm text-gray-500">Products</p>
+         </div>
+        </div>
+       </div>
+       <div class="bg-white rounded-xl p-5 shadow-sm">
+        <div class="flex items-center gap-3">
+         <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center"><span class="text-2xl">📦</span>
+         </div>
+         <div>
+          <p class="text-2xl font-bold text-gray-800" id="stat-orders">0</p>
+          <p class="text-sm text-gray-500">Orders</p>
+         </div>
+        </div>
+       </div>
+       <div class="bg-white rounded-xl p-5 shadow-sm">
+        <div class="flex items-center gap-3">
+         <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center"><span class="text-2xl">👥</span>
+         </div>
+         <div>
+          <p class="text-2xl font-bold text-gray-800" id="stat-users">0</p>
+          <p class="text-sm text-gray-500">Users</p>
+         </div>
+        </div>
+       </div>
+       <div class="bg-white rounded-xl p-5 shadow-sm">
+        <div class="flex items-center gap-3">
+         <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center"><span class="text-2xl">💰</span>
+         </div>
+         <div>
+          <p class="text-2xl font-bold text-gray-800" id="stat-revenue">₹0</p>
+          <p class="text-sm text-gray-500">Revenue</p>
+         </div>
+        </div>
+       </div>
+      </div>
+      <div class="grid md:grid-cols-2 gap-6">
+       <div class="bg-white rounded-xl p-6 shadow-sm">
+        <h3 class="font-bold text-gray-800 mb-4">📦 Recent Orders</h3>
+        <div id="admin-recent-orders" class="space-y-3 max-h-80 overflow-y-auto"></div>
+       </div>
+       <div class="bg-white rounded-xl p-6 shadow-sm">
+        <h3 class="font-bold text-gray-800 mb-4">⏳ Pending Products</h3>
+        <div id="admin-pending-products" class="space-y-3 max-h-80 overflow-y-auto"></div>
+       </div>
+      </div>
+     </div><!-- Products Tab -->
+     <div id="admin-products" class="admin-panel hidden">
+      <div class="bg-white rounded-xl p-6 shadow-sm mb-6">
+       <h3 class="font-bold text-gray-800 mb-4">Add New Product (Admin)</h3>
+       <form id="admin-add-product-form" class="space-y-4">
+        <div class="grid md:grid-cols-3 gap-4">
+         <div><label for="admin-product-name" class="block text-sm font-medium text-gray-700 mb-1">Product Name</label> <input type="text" id="admin-product-name" required class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition">
+         </div>
+         <div><label for="admin-product-category" class="block text-sm font-medium text-gray-700 mb-1">Category</label> <select id="admin-product-category" required class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition"> <option value="vegetables">Vegetables</option> <option value="fruits">Fruits</option> <option value="dairy">Dairy</option> <option value="grains">Grains</option> <option value="spices">Spices</option> <option value="organic">Organic</option> </select>
+         </div>
+         <div><label for="admin-product-price" class="block text-sm font-medium text-gray-700 mb-1">Price (₹)</label> <input type="number" id="admin-product-price" required min="1" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition">
+         </div>
+         <div><label for="admin-product-quantity" class="block text-sm font-medium text-gray-700 mb-1">Quantity</label> <input type="text" id="admin-product-quantity" placeholder="e.g., 500g, 1kg" required class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition">
+         </div>
+         <div><label for="admin-product-image" class="block text-sm font-medium text-gray-700 mb-1">Product Photo</label>
+          <div class="flex items-center gap-3"><label class="flex-1 flex items-center justify-center gap-2 px-3 py-2 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-emerald-500 hover:bg-emerald-50 transition"> <span class="text-xl">📷</span> <span class="text-xs text-gray-600">Upload photo</span> <input type="file" id="admin-product-image" accept="image/*" class="hidden" onchange="previewAdminImage(this)"> </label>
+           <div id="admin-image-preview" class="hidden w-12 h-12 rounded-lg overflow-hidden bg-gray-100 border-2 border-emerald-500 flex-shrink-0"><img id="admin-preview-img" src="" alt="Preview" class="w-full h-full object-cover">
+           </div>
+          </div><input type="hidden" id="admin-product-image-data">
+         </div>
+         <div><label for="admin-product-delivery" class="block text-sm font-medium text-gray-700 mb-1">Delivery Time</label> <select id="admin-product-delivery" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition"> <option value="8 MINS">8 MINS</option> <option value="15 MINS">15 MINS</option> <option value="30 MINS">30 MINS</option> </select>
+         </div>
+        </div><button type="submit" class="bg-emerald-600 text-white px-6 py-2.5 rounded-xl font-medium hover:bg-emerald-700 transition"> + Add Product </button>
+       </form>
+      </div>
+      <div class="bg-white rounded-xl p-6 shadow-sm">
+       <div class="flex items-center justify-between mb-4">
+        <h3 class="font-bold text-gray-800">All Products</h3><button id="admin-refresh-products" class="text-sm text-emerald-600 hover:text-emerald-700 font-medium">���� Refresh</button>
+       </div>
+       <div id="admin-products-list" class="space-y-3 max-h-96 overflow-y-auto"></div>
+      </div>
+     </div><!-- Orders Tab -->
+     <div id="admin-orders" class="admin-panel hidden">
+      <div class="bg-white rounded-xl p-6 shadow-sm">
+       <div class="flex items-center justify-between mb-4">
+        <h3 class="font-bold text-gray-800">All Orders</h3><button id="admin-refresh-orders" class="text-sm text-emerald-600 hover:text-emerald-700 font-medium">🔄 Refresh</button>
+       </div>
+       <div id="admin-orders-list" class="space-y-4 max-h-[600px] overflow-y-auto"></div>
+      </div>
+     </div><!-- Users Tab -->
+     <div id="admin-users" class="admin-panel hidden">
+      <div class="bg-white rounded-xl p-6 shadow-sm">
+       <div class="flex items-center justify-between mb-4">
+        <h3 class="font-bold text-gray-800">All Users</h3><button id="admin-refresh-users" class="text-sm text-emerald-600 hover:text-emerald-700 font-medium">🔄 Refresh</button>
+       </div>
+       <div id="admin-users-list" class="space-y-3 max-h-[600px] overflow-y-auto"></div>
+      </div>
+     </div>
+    </main>
+   </div><!-- Assign Order Modal (Admin) -->
+   <div id="assign-order-modal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50 modal-overlay" onclick="closeAssignOrderModal()"></div>
+    <div class="absolute inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
+     <div class="p-6">
+      <div class="flex items-center justify-between mb-6">
+       <h2 class="text-xl font-bold text-gray-800">���� Assign Delivery Partner</h2><button onclick="closeAssignOrderModal()" class="p-2 hover:bg-gray-100 rounded-lg transition">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg></button>
+      </div>
+      <div id="assign-order-info" class="bg-gray-50 rounded-xl p-4 mb-4"><!-- Order info will be populated here -->
+      </div>
+      <div class="mb-4"><label for="select-delivery-partner" class="block text-sm font-medium text-gray-700 mb-2">Select Delivery Partner</label> <select id="select-delivery-partner" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition"> <option value="">-- Choose Partner --</option> </select>
+      </div>
+      <div id="assignment-id-preview" class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-4 rounded-xl mb-4 hidden">
+       <p class="text-xs opacity-80">🎫 Assignment ID</p>
+       <p id="new-assignment-id" class="text-xl font-mono font-bold"></p>
+      </div><button onclick="confirmAssignOrder()" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-semibold hover:bg-emerald-700 transition"> �� Assign Order </button>
+     </div>
+    </div>
+   </div><!-- Edit Product Modal (Admin) -->
+   <div id="edit-product-modal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50 modal-overlay" onclick="closeEditProductModal()"></div>
+    <div class="absolute inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden max-h-[90%] overflow-y-auto">
+     <div class="p-6">
+      <div class="flex items-center justify-between mb-6">
+       <h2 class="text-xl font-bold text-gray-800">✏️ Edit Product</h2><button onclick="closeEditProductModal()" class="p-2 hover:bg-gray-100 rounded-lg transition">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg></button>
+      </div>
+      <form id="edit-product-form" class="space-y-4"><input type="hidden" id="edit-product-id">
+       <div class="grid grid-cols-2 gap-4">
+        <div class="col-span-2"><label for="edit-product-name" class="block text-sm font-medium text-gray-700 mb-1">Product Name</label> <input type="text" id="edit-product-name" required class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition">
+        </div>
+        <div><label for="edit-product-price" class="block text-sm font-medium text-gray-700 mb-1">Price (₹)</label> <input type="number" id="edit-product-price" required min="1" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition">
+        </div>
+        <div><label for="edit-product-original-price" class="block text-sm font-medium text-gray-700 mb-1">Original Price (₹)</label> <input type="number" id="edit-product-original-price" min="0" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition">
+        </div>
+        <div><label for="edit-product-category" class="block text-sm font-medium text-gray-700 mb-1">Category</label> <select id="edit-product-category" required class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition"> <option value="vegetables">Vegetables</option> <option value="fruits">Fruits</option> <option value="dairy">Dairy</option> <option value="grains">Grains</option> <option value="spices">Spices</option> <option value="organic">Organic</option> </select>
+        </div>
+        <div><label for="edit-product-quantity" class="block text-sm font-medium text-gray-700 mb-1">Quantity</label> <input type="text" id="edit-product-quantity" required placeholder="e.g., 500g, 1kg" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition">
+        </div>
+        <div class="col-span-2"><label for="edit-product-image" class="block text-sm font-medium text-gray-700 mb-1">Product Photo</label>
+         <div class="flex items-center gap-4"><label class="flex-1 flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-emerald-500 hover:bg-emerald-50 transition"> <span class="text-2xl">📷</span> <span class="text-sm text-gray-600">Click to upload new photo</span> <input type="file" id="edit-product-image-file" accept="image/*" class="hidden" onchange="previewEditImage(this)"> </label>
+          <div id="edit-product-preview" class="w-20 h-20 rounded-xl overflow-hidden bg-gray-100 border-2 border-emerald-500 flex-shrink-0"><img id="edit-product-preview-img" src="" alt="Preview" class="w-full h-full object-cover">
+          </div>
+         </div><input type="hidden" id="edit-product-image">
+        </div>
+        <div><label for="edit-product-delivery" class="block text-sm font-medium text-gray-700 mb-1">Delivery Time</label> <select id="edit-product-delivery" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition"> <option value="8 MINS">8 MINS</option> <option value="15 MINS">15 MINS</option> <option value="30 MINS">30 MINS</option> </select>
+        </div>
+        <div class="col-span-2"><label for="edit-product-description" class="block text-sm font-medium text-gray-700 mb-1">Description</label> <textarea id="edit-product-description" rows="2" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition resize-none"></textarea>
+        </div>
+        <div class="col-span-2"><label for="edit-product-status" class="block text-sm font-medium text-gray-700 mb-1">Status</label> <select id="edit-product-status" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition"> <option value="approved">Approved (Visible)</option> <option value="pending">Pending</option> <option value="rejected">Rejected (Hidden)</option> </select>
+        </div>
+       </div>
+       <div class="flex gap-3 pt-2"><button type="submit" class="flex-1 bg-emerald-600 text-white py-3 rounded-xl font-semibold hover:bg-emerald-700 transition"> 💾 Save Changes </button> <button type="button" onclick="deleteProduct()" class="px-6 py-3 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 transition"> ��️ Delete </button>
+       </div>
+      </form>
+     </div>
+    </div>
+   </div><!-- Toast Container -->
+   <div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-2"></div>
+  /* </div> */
+  <script src="script.js"></script>
+   </body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9b4f8ab6f7c947d5',t:'MTc2NjkwOTAxNC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
